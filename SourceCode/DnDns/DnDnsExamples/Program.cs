@@ -50,9 +50,11 @@ namespace DnDnsExamples
     {
         static void Main(string[] args)
         {
+            var dnsServer = "8.8.8.8";
+
             // Test TCP request
             DnsQueryRequest request = new DnsQueryRequest();
-            DnsQueryResponse response = request.Resolve("www.google.com", NsType.A, NsClass.INET, ProtocolType.Tcp);
+            DnsQueryResponse response = request.Resolve(dnsServer, "www.google.com", NsType.A, NsClass.INET, ProtocolType.Tcp, null);
 
             OutputResults(response);
 
@@ -79,7 +81,7 @@ namespace DnDnsExamples
             Console.WriteLine("NsType: " + response.NsType);
             Console.WriteLine("RCode: " + response.RCode);
             Console.WriteLine("OpCode: " + response.OpCode);
-            
+
             // Enumerate the Answer Records
             Console.WriteLine("Answers:");
             foreach (IDnsRecord record in response.Answers)
