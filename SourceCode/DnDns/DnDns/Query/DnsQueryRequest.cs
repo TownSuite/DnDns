@@ -372,10 +372,16 @@ namespace DnDns.Query
 
                 using (NetworkStream netStream = tcpClient.GetStream())
                 {
+                    netStream.ReadTimeout = 6000;
+                    netStream.WriteTimeout = 6000;
                     netStream.Write(bDnsQuery, 0, bDnsQuery.Length);
 
                     // wait until data is avail
-                    while (!netStream.DataAvailable) ;
+                    while (!netStream.DataAvailable)
+                    {
+                        // do not spike cpu to 100% while waiting
+                        System.Threading.Thread.Sleep(100);
+                    };
 
                     if (tcpClient.Connected && netStream.DataAvailable)
                     {
