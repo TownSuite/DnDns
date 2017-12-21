@@ -49,11 +49,11 @@ using System.Collections.Generic;
 
 namespace DnDns.Query
 {
-	/// <summary>
+    /// <summary>
     /// Summary description for DnsQueryRequest.
-	/// </summary>
-	public class DnsQueryRequest  : DnsQueryBase
-	{
+    /// </summary>
+    public class DnsQueryRequest : DnsQueryBase
+    {
         private static Random r = new Random();
 
         // private DnsPermission _dnsPermissions;
@@ -74,7 +74,7 @@ namespace DnDns.Query
         /// </summary>
         public int BytesSent
         {
-            get { return _bytesSent; } 
+            get { return _bytesSent; }
         }
 
         /// <summary>
@@ -84,75 +84,75 @@ namespace DnDns.Query
         public int Timeout
         {
             get { return _socketTimeout; }
-            set { _socketTimeout = value; } 
+            set { _socketTimeout = value; }
         }
 
         #region Constructors
-        public DnsQueryRequest() 
-		{
+        public DnsQueryRequest()
+        {
             // FIXME _dnsPermissions = new DnsPermission(PermissionState.Unrestricted);
 
             // Construct the class with some defaults
-            _transactionId = (ushort) r.Next();
+            _transactionId = (ushort)r.Next();
             _flags = 0;
             _queryResponse = QueryResponse.Query;
             this._opCode = OpCode.QUERY;
             // Recursion Desired
             this._nsFlags = NsFlags.RD;
             this._questions = 1;
-		}
+        }
 
-		#endregion Constructors
+        #endregion Constructors
 
-		private byte[] BuildQuery(string host) 
-		{
-			string newHost;
-			int newLocation = 0;
-			int oldLocation = 0;
+        private byte[] BuildQuery(string host)
+        {
+            string newHost;
+            int newLocation = 0;
+            int oldLocation = 0;
 
-			MemoryStream ms = new MemoryStream();
+            MemoryStream ms = new MemoryStream();
 
-			host = host.Trim();
-			// decide how to build this query based on type
-			switch (_nsType) 
-			{
-				case NsType.PTR:
+            host = host.Trim();
+            // decide how to build this query based on type
+            switch (_nsType)
+            {
+                case NsType.PTR:
                     // IPAddress.Parse as input validation.
-					IPAddress.Parse(host);
+                    IPAddress.Parse(host);
 
-					// pointer should be translated as follows
-					// 209.115.22.3 -> 3.22.115.209.in-addr.arpa
-					char[] ipDelim = new char[] {'.'};
+                    // pointer should be translated as follows
+                    // 209.115.22.3 -> 3.22.115.209.in-addr.arpa
+                    char[] ipDelim = new char[] { '.' };
 
-					string[] s = host.Split(ipDelim,4);
-					newHost = String.Format("{0}.{1}.{2}.{3}.in-addr.arpa", s[3], s[2], s[1], s[0]);
-					break;
-				default:
-					newHost = host;
-					break;
-			}
-			
-			// Package up the host
-			while(oldLocation < newHost.Length) 
-			{
-				newLocation = newHost.IndexOf(".", oldLocation);	
-				
-				if (newLocation == -1) newLocation = newHost.Length;
+                    string[] s = host.Split(ipDelim, 4);
+                    newHost = String.Format("{0}.{1}.{2}.{3}.in-addr.arpa", s[3], s[2], s[1], s[0]);
+                    break;
+                default:
+                    newHost = host;
+                    break;
+            }
 
-				byte subDomainLength = (byte)(newLocation - oldLocation);
-				char[] sub = newHost.Substring(oldLocation, subDomainLength).ToCharArray();
-				
-				ms.WriteByte(subDomainLength);
-				ms.Write(Encoding.ASCII.GetBytes(sub, 0, sub.Length), 0, sub.Length);
+            // Package up the host
+            while (oldLocation < newHost.Length)
+            {
+                newLocation = newHost.IndexOf(".", oldLocation);
 
-				oldLocation = newLocation + 1;
-			}
+                if (newLocation == -1) newLocation = newHost.Length;
 
-			// Terminate the domain name w/ a 0x00. 
-			ms.WriteByte(0x00);
+                byte subDomainLength = (byte)(newLocation - oldLocation);
+                char[] sub = newHost.Substring(oldLocation, subDomainLength).ToCharArray();
 
-			return ms.ToArray();
-		}
+                ms.WriteByte(subDomainLength);
+                ms.Write(Encoding.ASCII.GetBytes(sub, 0, sub.Length), 0, sub.Length);
+
+                oldLocation = newLocation + 1;
+            }
+
+            // Terminate the domain name w/ a 0x00. 
+            ms.WriteByte(0x00);
+
+            return ms.ToArray();
+        }
 
         private static string[] GetDnsServers()
         {
@@ -167,11 +167,12 @@ namespace DnDns.Query
             else
             {
                 IPAddressCollection dnsServerCollection = Tools.DiscoverDnsServerAddresses();
-                var servers = new List<string> ();
-                foreach (var server in dnsServerCollection) {
-                    servers.Add (server.ToString ());
+                var servers = new List<string>();
+                foreach (var server in dnsServerCollection)
+                {
+                    servers.Add(server.ToString());
                 }
-                dnsServers = servers.ToArray ();
+                dnsServers = servers.ToArray();
             }
             return dnsServers;
         }
@@ -191,10 +192,14 @@ namespace DnDns.Query
 
         public Task<DnsQueryResponse> ResolveAsync(string host, NsType queryType, NsClass queryClass, ProtocolType protocol)
         {
-            return Task.Factory.StartNew<DnsQueryResponse> (() => {
-                try {
-                    return Resolve (host, queryType, queryClass, protocol);
-                } catch {
+            return Task.Factory.StartNew<DnsQueryResponse>(() =>
+            {
+                try
+                {
+                    return Resolve(host, queryType, queryClass, protocol);
+                }
+                catch
+                {
                     // FIXME - uplevel this code to work with cancellation token.
                     return null;
                 }
@@ -203,11 +208,15 @@ namespace DnDns.Query
 
         public DnsQueryResponse Resolve(string host, NsType queryType, NsClass queryClass, ProtocolType protocol, TsigMessageSecurityProvider provider)
         {
-            foreach (var server in GetDnsServers ()) {
-                try {
-                    return Resolve (server, host, queryType, queryClass, protocol, provider);
-                } catch (Exception ex) {
-                    Console.WriteLine (string.Format ("DnsQueryRequest.Resolve: Could not resolve host {0}: {1}", host, ex));
+            foreach (var server in GetDnsServers())
+            {
+                try
+                {
+                    return Resolve(server, host, queryType, queryClass, protocol, provider);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(string.Format("DnsQueryRequest.Resolve: Could not resolve host {0}: {1}", host, ex));
                 }
             }
             return null;
@@ -226,41 +235,47 @@ namespace DnDns.Query
         /// <PermissionSet>
         ///     <IPermission class="System.Net.DnsPermission, System, Version=2.0.3600.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" version="1" Unrestricted="true" />
         /// </PermissionSet>
-        public DnsQueryResponse Resolve(string dnsServer, string host, NsType queryType, NsClass queryClass, ProtocolType protocol, IMessageSecurityProvider messageSecurityProvider) 
-		{
+        public DnsQueryResponse Resolve(string dnsServer, string host, NsType queryType, NsClass queryClass, ProtocolType protocol, IMessageSecurityProvider messageSecurityProvider)
+        {
             // Do stack walk and Demand all callers have DnsPermission.
             // FIXME _dnsPermissions.Demand();
 
             DnsQueryResponse dnsQR = new DnsQueryResponse();
             // Try a native query if it is supported.
             if (Tools.HasSystemDns)
-                // CS0162 will fire when HasSystemDns is a constant.
+            // CS0162 will fire when HasSystemDns is a constant.
 #pragma warning disable 162
             {
                 // See https://www.dns-oarc.net/oarc/services/replysizetest - 4k likely plenty.
                 byte[] answer = new byte[4096];
-                int answerSize = Tools.SystemResQuery (host, queryClass, queryType, answer);
-                if (0 < answerSize) {
-                    dnsQR.ParseResponse (answer, answerSize);
+                int answerSize = Tools.SystemResQuery(host, queryClass, queryType, answer);
+                if (0 < answerSize)
+                {
+                    dnsQR.ParseResponse(answer, answerSize);
                     return dnsQR;
-                } else {
+                }
+                else
+                {
                     return null;
                 }
             }
 
             byte[] recvBytes = null;
             byte[] bDnsQuery = this.BuildDnsRequest(host, queryType, queryClass, protocol, messageSecurityProvider);
-			
-            IPAddress[] ipas = System.Net.Dns.GetHostAddresses (dnsServer);
+
+            IPAddress[] ipas = System.Net.Dns.GetHostAddresses(dnsServer);
             IPEndPoint ipep = null;
-            foreach (var addr in ipas) {
-                if (addr.AddressFamily == AddressFamily.InterNetwork) {
+            foreach (var addr in ipas)
+            {
+                if (addr.AddressFamily == AddressFamily.InterNetwork)
+                {
                     ipep = new IPEndPoint(addr, (int)UdpServices.Domain);
                     break;
                 }
             }
-            if (null == ipep) {
-                throw new Exception (string.Format ("No IPv4 address found for hostname {0}", dnsServer));
+            if (null == ipep)
+            {
+                throw new Exception(string.Format("No IPv4 address found for hostname {0}", dnsServer));
             }
 
             switch (protocol)
@@ -283,10 +298,10 @@ namespace DnDns.Query
 
             Trace.Assert(recvBytes != null, "Failed to retrieve data from the remote DNS server.");
 
-			dnsQR.ParseResponse(recvBytes);
+            dnsQR.ParseResponse(recvBytes);
 
-			return dnsQR;
-		}
+            return dnsQR;
+        }
 
         private byte[] ResolveUdp(byte[] bDnsQuery, IPEndPoint ipep)
         {
@@ -315,68 +330,69 @@ namespace DnDns.Query
         /// <returns>The response.</returns>
         /// <param name="udpClient">UdpClient instance.</param>
         /// <param name="remoteEP">Remote EndPoint (ref).</param>
-        byte [] ReceiveResponse (UdpClient udpClient, ref IPEndPoint remoteEP)
+        byte[] ReceiveResponse(UdpClient udpClient, ref IPEndPoint remoteEP)
         {
-            var recvBytes = new byte [65536]; // Max. size
+            var recvBytes = new byte[65536]; // Max. size
             EndPoint endPoint;
-            if (remoteEP.AddressFamily == AddressFamily.InterNetwork) {
-                endPoint = new IPEndPoint (IPAddress.Any, 0);
-            } else if (remoteEP.AddressFamily == AddressFamily.InterNetworkV6) {
-                endPoint = new IPEndPoint (IPAddress.IPv6Any, 0);
-            } else {
-                throw new ArgumentException ("Wrong network type");
+            if (remoteEP.AddressFamily == AddressFamily.InterNetwork)
+            {
+                endPoint = new IPEndPoint(IPAddress.Any, 0);
             }
-            int dataRead = udpClient.Client.ReceiveFrom (recvBytes, ref endPoint);
-            if (dataRead < recvBytes.Length) {
-                recvBytes = CutArray (recvBytes, dataRead);
+            else if (remoteEP.AddressFamily == AddressFamily.InterNetworkV6)
+            {
+                endPoint = new IPEndPoint(IPAddress.IPv6Any, 0);
             }
-            remoteEP = (IPEndPoint) endPoint;
+            else
+            {
+                throw new ArgumentException("Wrong network type");
+            }
+            int dataRead = udpClient.Client.ReceiveFrom(recvBytes, ref endPoint);
+            if (dataRead < recvBytes.Length)
+            {
+                recvBytes = CutArray(recvBytes, dataRead);
+            }
+            remoteEP = (IPEndPoint)endPoint;
             return recvBytes;
         }
 
-        private byte [] CutArray (byte [] orig, int length)
+        private byte[] CutArray(byte[] orig, int length)
         {
-            byte [] newArray = new byte [length];
-            Buffer.BlockCopy (orig, 0, newArray, 0, length);
+            byte[] newArray = new byte[length];
+            Buffer.BlockCopy(orig, 0, newArray, 0, length);
 
             return newArray;
         }
 
         private static byte[] ResolveTcp(byte[] bDnsQuery, IPEndPoint ipep)
         {
-            TcpClient tcpClient = new TcpClient();
             byte[] recvBytes = null;
-
-            try
+            using (TcpClient tcpClient = new TcpClient())
             {
                 tcpClient.Connect(ipep);
 
-                NetworkStream netStream = tcpClient.GetStream();
-                BinaryReader netReader = new System.IO.BinaryReader(netStream);
-
-                netStream.Write(bDnsQuery, 0, bDnsQuery.Length);
-
-                // wait until data is avail
-                while (!netStream.DataAvailable) ;
-
-                if (tcpClient.Connected && netStream.DataAvailable)
+                using (NetworkStream netStream = tcpClient.GetStream())
                 {
-                    // Read first two bytes to find out the length of the response
-                    byte[] bLen = new byte[2];
-                    
-                    // NOTE: The order of the next two lines matter. Do not reorder
-                    // Array indexes are also intentionally reversed
-                    bLen[1] = (byte)netStream.ReadByte();
-                    bLen[0] = (byte)netStream.ReadByte();
+                    netStream.Write(bDnsQuery, 0, bDnsQuery.Length);
 
-                    UInt16 length = BitConverter.ToUInt16(bLen, 0);
+                    // wait until data is avail
+                    while (!netStream.DataAvailable) ;
 
-                    recvBytes = new byte[length];
-                    netStream.Read(recvBytes, 0, length);
+                    if (tcpClient.Connected && netStream.DataAvailable)
+                    {
+                        // Read first two bytes to find out the length of the response
+                        byte[] bLen = new byte[2];
+
+                        // NOTE: The order of the next two lines matter. Do not reorder
+                        // Array indexes are also intentionally reversed
+                        bLen[1] = (byte)netStream.ReadByte();
+                        bLen[0] = (byte)netStream.ReadByte();
+
+                        UInt16 length = BitConverter.ToUInt16(bLen, 0);
+
+                        recvBytes = new byte[length];
+                        netStream.Read(recvBytes, 0, length);
+                    }
                 }
-            }
-            finally
-            {
                 tcpClient.Close();
             }
             return recvBytes;
@@ -393,7 +409,7 @@ namespace DnDns.Query
             this._nsClass = queryClass;
             this._name = host;
 
-            if(messageSecurityProvider != null)
+            if (messageSecurityProvider != null)
             {
                 messageSecurityProvider.SecureMessage(this);
             }
@@ -425,19 +441,19 @@ namespace DnDns.Query
 
             data = BitConverter.GetBytes((ushort)(IPAddress.HostToNetworkOrder(_transactionId) >> 16));
             memoryStream.Write(data, 0, data.Length);
-            
+
             data = BitConverter.GetBytes((ushort)(IPAddress.HostToNetworkOrder(_flags) >> 16));
             memoryStream.Write(data, 0, data.Length);
-            
+
             data = BitConverter.GetBytes((ushort)(IPAddress.HostToNetworkOrder(_questions) >> 16));
             memoryStream.Write(data, 0, data.Length);
-            
+
             data = BitConverter.GetBytes((ushort)(IPAddress.HostToNetworkOrder(_answerRRs) >> 16));
             memoryStream.Write(data, 0, data.Length);
-            
+
             data = BitConverter.GetBytes((ushort)(IPAddress.HostToNetworkOrder(_authorityRRs) >> 16));
             memoryStream.Write(data, 0, data.Length);
-            
+
             data = BitConverter.GetBytes((ushort)(IPAddress.HostToNetworkOrder(_additionalRecords.Count) >> 16));
             memoryStream.Write(data, 0, data.Length);
 
@@ -446,7 +462,7 @@ namespace DnDns.Query
 
             data = BitConverter.GetBytes((ushort)(IPAddress.HostToNetworkOrder((ushort)_nsType) >> 16));
             memoryStream.Write(data, 0, data.Length);
-            
+
             data = BitConverter.GetBytes((ushort)(IPAddress.HostToNetworkOrder((ushort)_nsClass) >> 16));
             memoryStream.Write(data, 0, data.Length);
 
@@ -460,5 +476,5 @@ namespace DnDns.Query
 
             return memoryStream.ToArray();
         }
-	}
+    }
 }
